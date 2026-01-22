@@ -1,6 +1,6 @@
 {
   "functions": {
-    "css/api/*.php": {
+    "css/api/bot.php": {
       "runtime": "vercel-php@0.9.0"
     }
   },
