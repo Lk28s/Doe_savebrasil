@@ -1,0 +1,4 @@
+.env
+*.log
+php_tmp/
+php_sessions/

