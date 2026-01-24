@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     nomeCartaoInput.addEventListener('input', function(e) {
-        e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '').substring(0, 20);
+        e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '').substring(0, 35);
     });
 
     cvvInput.addEventListener('input', function(e) {
@@ -119,4 +119,5 @@ function showSuccessEmoji() {
     setTimeout(function() {
         overlay.remove();
     }, 5000);
+
 }
