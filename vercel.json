@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/enviar.js": {
+    "api/enviar.mjs": {
       "memory": 1024,
       "maxDuration": 10
     }
